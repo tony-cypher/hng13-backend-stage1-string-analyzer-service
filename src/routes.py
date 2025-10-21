@@ -15,5 +15,5 @@ async def create_string(
     payload: StringRequest, session: AsyncSession = Depends(get_session)
 ):
     record = await string_analyze_service.create_string(payload.value, session)
-    created_at = string_analyze_service.format_datetime_z(record.created_at)
-    return {"id": record.id, "value": record.value, "created_at": created_at}
+    formatted_date = record.created_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+    return {"id": record.id, "value": record.value, "created_at": formatted_date}
