@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from src.db.main import init_db
-from src.routes import string_router
+from src.routes import router
 
 
 @asynccontextmanager
@@ -23,7 +23,7 @@ app = FastAPI(
     lifespan=life_span,
 )
 
-app.include_router(string_router, prefix="/strings", tags=["String Analyzer"])
+app.include_router(router, prefix="/strings", tags=["String Analyzer"])
 
 
 @app.get("/")

@@ -23,3 +23,11 @@ class InvalidDataType(HTTPException):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail='Invalid data type for "value" (must be string)',
         )
+
+
+class StringNotFound(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="String does not exist in the system",
+        )

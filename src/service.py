@@ -6,6 +6,7 @@ from src.errors.exceptions import (
     StringAlreadyExists,
     InvalidRequestBody,
     InvalidDataType,
+    StringNotFound,
 )
 from .utils import (
     get_string_length,
@@ -20,7 +21,7 @@ class StringToAnalyzeService:
     def generate_sha256(self, value: str) -> str:
         return sha256(value.encode("utf-8")).hexdigest()
 
-    async def create_string(self, value: str, session: AsyncSession):
+    async def create_string(self, value: str, session: AsyncSession) -> dict:
         if value is None or value == "":
             raise InvalidRequestBody()
 
@@ -39,12 +40,30 @@ class StringToAnalyzeService:
         await session.commit()
         await session.refresh(record)
 
+        return self._build_response(record)
+
+    async def get_string(self, value: str, session: AsyncSession) -> dict:
+        hash_id = self.generate_sha256(value)
+        result = await session.exec(
+            select(StringToAnalyze).where(StringToAnalyze.id == hash_id)
+        )
+        record = result.scalar_one_or_none()
+        print(record)
+
+        if not record:
+            raise StringNotFound()
+
+        return StringToAnalyzeService._build_response(record)
+
+    @staticmethod
+    def _build_response(record: StringToAnalyze) -> dict:
+        value = record.value
         properties = {
             "length": get_string_length(value),
             "is_palindrome": is_palindrome(value),
             "unique_characters": count_unique_characters(value),
             "word_count": count_words(value),
-            "sha256_hash": hash_id,
+            "sha256_hash": record.id,
             "character_frequency_map": get_character_frequency(value),
         }
 
