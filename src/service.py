@@ -7,6 +7,13 @@ from src.errors.exceptions import (
     InvalidRequestBody,
     InvalidDataType,
 )
+from .utils import (
+    get_string_length,
+    is_palindrome,
+    count_unique_characters,
+    count_words,
+    get_character_frequency,
+)
 
 
 class StringToAnalyzeService:
@@ -31,4 +38,19 @@ class StringToAnalyzeService:
         session.add(record)
         await session.commit()
         await session.refresh(record)
-        return record
+
+        properties = {
+            "length": get_string_length(value),
+            "is_palindrome": is_palindrome(value),
+            "unique_characters": count_unique_characters(value),
+            "word_count": count_words(value),
+            "sha256_hash": hash_id,
+            "character_frequency_map": get_character_frequency(value),
+        }
+
+        return {
+            "id": record.id,
+            "value": record.value,
+            "properties": properties,
+            "created_at": record.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }

@@ -23,7 +23,7 @@ app = FastAPI(
     lifespan=life_span,
 )
 
-app.include_router(string_router)
+app.include_router(string_router, prefix="/strings", tags=["String Analyzer"])
 
 
 @app.get("/")
