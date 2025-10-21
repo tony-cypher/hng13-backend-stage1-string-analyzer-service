@@ -1,10 +1,6 @@
-from sqlmodel import SQLModel, Field
-from hashlib import sha256
-from datetime import datetime
-
-
-def generate_sha256(value: str) -> str:
-    return sha256(value.encode("utf-8")).hexdigest()
+from sqlmodel import SQLModel, Field, Column
+from sqlalchemy import DateTime
+from datetime import datetime, timezone
 
 
 class StringToAnalyze(SQLModel, table=True):
@@ -12,4 +8,7 @@ class StringToAnalyze(SQLModel, table=True):
 
     id: str = Field(default=None, primary_key=True, index=True)
     value: str
-    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = Field(
+        sa_column=Column(DateTime(timezone=True)),
+        default_factory=lambda: datetime.now(timezone.utc),
+    )

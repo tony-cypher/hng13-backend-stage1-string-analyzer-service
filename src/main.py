@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from src.db.main import init_db
+from src.routes import string_router
 
 
 @asynccontextmanager
@@ -21,6 +22,8 @@ app = FastAPI(
     openapi_url=f"{version_prefix}/openapi.json",
     lifespan=life_span,
 )
+
+app.include_router(string_router)
 
 
 @app.get("/")
