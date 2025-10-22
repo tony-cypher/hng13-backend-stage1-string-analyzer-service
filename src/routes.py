@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, status, Response
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
 from .schema import StringRequest, StringFilterParams
@@ -58,3 +58,16 @@ async def get_all_strings(
         raise InvalidQueryParams()
 
     return await string_analyze_service.get_strings(filters, session)
+
+
+@router.delete(
+    "/strings/{string_value}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a string by its value",
+    response_description="No content",
+)
+async def delete_string(
+    string_value: str, session: AsyncSession = Depends(get_session)
+):
+    await StringToAnalyzeService.delete_string(session, string_value)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

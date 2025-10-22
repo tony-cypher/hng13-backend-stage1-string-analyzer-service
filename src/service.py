@@ -224,3 +224,13 @@ class StringToAnalyzeService:
                 "parsed_filters": parsed_filters,
             },
         }
+
+    async def delete_string(session: AsyncSession, string_value: str) -> None:
+        record = await session.scalar(
+            select(StringToAnalyze).where(StringToAnalyze.value == string_value)
+        )
+        if not record:
+            raise StringNotFound()
+        await session.delete(record)
+        await session.commit()
+        return None
