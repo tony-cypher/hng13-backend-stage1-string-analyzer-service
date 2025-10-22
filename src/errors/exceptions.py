@@ -31,3 +31,9 @@ class StringNotFound(HTTPException):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="String does not exist in the system",
         )
+
+
+class InvalidQueryParams(Exception):
+    def __init__(self):
+        self.status_code = status.HTTP_400_BAD_REQUEST
+        self.detail = "Invalid query parameter values or types"
