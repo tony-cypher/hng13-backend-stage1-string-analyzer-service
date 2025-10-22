@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from src.db.main import init_db
 from src.routes import router
+from src.errors.handlers import register_exception_handlers
 
 
 @asynccontextmanager
@@ -22,6 +23,8 @@ app = FastAPI(
     openapi_url=f"{version_prefix}/openapi.json",
     lifespan=life_span,
 )
+
+register_exception_handlers(app)
 
 app.include_router(router, prefix="/strings", tags=["String Analyzer"])
 

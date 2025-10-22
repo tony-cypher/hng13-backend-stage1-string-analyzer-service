@@ -17,6 +17,20 @@ async def create_string(
     return record
 
 
+@router.get("/filter-by-natural-language", status_code=status.HTTP_200_OK)
+async def filter_by_natural_language(
+    query: str = Query(..., description="Natural language filter query"),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Interpret a human query like:
+    - 'all single word palindromic strings'
+    - 'strings longer than 10 characters'
+    - 'strings containing the letter z'
+    """
+    return await string_analyze_service.get_by_natural_language_query(query, session)
+
+
 @router.get("/{string_value}", status_code=status.HTTP_200_OK)
 async def get_string(string_value: str, session: AsyncSession = Depends(get_session)):
     return await string_analyze_service.get_string(string_value, session)

@@ -1,3 +1,4 @@
+import re
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy import select
 from hashlib import sha256
@@ -10,6 +11,8 @@ from src.errors.exceptions import (
     InvalidDataType,
     StringNotFound,
     InvalidQueryParams,
+    ConflictingFilters,
+    UnableToParseQuery,
 )
 from .schema import StringFilterParams
 from .utils import (
@@ -62,6 +65,63 @@ class StringToAnalyzeService:
             "properties": properties,
             "created_at": record.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
+
+    @staticmethod
+    def parse_natural_language_query(query: str) -> Dict:
+        if not query or not query.strip():
+            raise UnableToParseQuery(query)
+
+        query_lower = query.lower().strip()
+        filters = {}
+
+        # --- Palindrome related ---
+        if "palindromic" in query_lower or "palindrome" in query_lower:
+            filters["is_palindrome"] = True
+
+        # --- Single or multiple word conditions ---
+        if "single word" in query_lower or "one word" in query_lower:
+            filters["word_count"] = 1
+        elif "two word" in query_lower or "double word" in query_lower:
+            filters["word_count"] = 2
+
+        # --- Length conditions ---
+        match_longer = re.search(r"longer than (\d+)", query_lower)
+        if match_longer:
+            filters["min_length"] = int(match_longer.group(1)) + 1
+
+        match_shorter = re.search(r"shorter than (\d+)", query_lower)
+        if match_shorter:
+            filters["max_length"] = int(match_shorter.group(1)) - 1
+
+        match_exact_length = re.search(r"exactly (\d+) characters?", query_lower)
+        if match_exact_length:
+            filters["min_length"] = filters["max_length"] = int(
+                match_exact_length.group(1)
+            )
+
+        # --- Character filters ---
+        match_contains = re.search(
+            r"(contain|containing|includes?) the letter (\w)", query_lower
+        )
+        if match_contains:
+            filters["contains_character"] = match_contains.group(2)
+
+        # --- Vowel heuristic ---
+        if "first vowel" in query_lower:
+            filters["contains_character"] = "a"
+
+        # Validate conflicts (e.g., impossible length logic)
+        if (
+            "min_length" in filters
+            and "max_length" in filters
+            and filters["min_length"] > filters["max_length"]
+        ):
+            raise ConflictingFilters()
+
+        if not filters:
+            raise UnableToParseQuery(query)
+
+        return filters
 
     async def create_string(self, value: str, session: AsyncSession) -> dict:
         if value is None or value == "":
@@ -147,3 +207,20 @@ class StringToAnalyzeService:
 
         except Exception as e:
             raise InvalidQueryParams() from e
+
+    async def get_by_natural_language_query(
+        self, query: str, session: AsyncSession
+    ) -> Dict:
+        parsed_filters = StringToAnalyzeService.parse_natural_language_query(query)
+        filters_model = StringFilterParams(**parsed_filters)
+
+        result = await self.get_strings(filters_model, session)
+
+        return {
+            "data": result["data"],
+            "count": result["count"],
+            "interpreted_query": {
+                "original": query,
+                "parsed_filters": parsed_filters,
+            },
+        }

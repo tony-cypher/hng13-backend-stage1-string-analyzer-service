@@ -37,3 +37,15 @@ class InvalidQueryParams(Exception):
     def __init__(self):
         self.status_code = status.HTTP_400_BAD_REQUEST
         self.detail = "Invalid query parameter values or types"
+
+
+class UnableToParseQuery(Exception):
+    def __init__(self, query: str):
+        self.status_code = status.HTTP_400_BAD_REQUEST
+        self.detail = f"Unable to parse natural language query: '{query}'"
+
+
+class ConflictingFilters(Exception):
+    def __init__(self):
+        self.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+        self.detail = "Query parsed but resulted in conflicting filters"
