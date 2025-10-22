@@ -5,9 +5,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.config import Config
 from src.db.models import StringToAnalyze
 
-engine = create_async_engine(url=Config.DATABASE_URL, echo=False, pool_pre_ping=True)
-
-print(Config.DATABASE_URL)
+DATABASE_URL = Config.get_async_database_url()
+engine = create_async_engine(DATABASE_URL, echo=False)
+# engine = create_async_engine(url=Config.DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 async def init_db():

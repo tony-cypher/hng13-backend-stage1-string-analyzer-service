@@ -1,10 +1,20 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
-class Settings(BaseSettings):
-    DATABASE_URL: str
+class Config:
+    DATABASE_URL = os.getenv("DATABASE_URL")
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
-
-
-Config = Settings()
+    @staticmethod
+    def get_async_database_url():
+        """
+        Converts a psycopg2-style URL to an asyncpg-compatible one.
+        """
+        url = Config.DATABASE_URL
+        if url and url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url and url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
